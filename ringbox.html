@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Cinzel:wght@400;600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Scheherazade+New:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Cinzel:wght@400;600&display=swap"
         rel="stylesheet">
     <style>
         * {
@@ -116,11 +116,13 @@
         }
 
         .bismillah {
-            font-family: 'Amiri', serif;
-            font-size: clamp(1.15rem, 3.2vw, 1.9rem);
+            font-family: 'Scheherazade New', 'Amiri', serif;
+            font-size: clamp(1rem, 2.8vw, 1.7rem);
             color: #f3d77e;
-            text-shadow: 0 0 18px rgba(243, 215, 126, .45);
-            direction: rtl
+            text-shadow: 0 0 14px rgba(243, 215, 126, .45);
+            direction: rtl;
+            line-height: 1.6;
+            letter-spacing: 0;
         }
 
         .eyebrow {
@@ -174,8 +176,8 @@
         .blessing {
             text-align: center;
             max-width: 620px;
-            min-height: clamp(78px, 15vh, 130px);
-            opacity: 0;
+            min-height: clamp(60px, 12vh, 130px);
+            padding: 0 8px;
             transform: translateY(16px);
             transition: opacity 1.4s ease, transform 1.4s ease;
             display: flex;
@@ -190,12 +192,13 @@
         }
 
         .blessing .ar {
-            font-family: 'Amiri', serif;
+            font-family: 'Scheherazade New', 'Amiri', serif;
             direction: rtl;
-            font-size: clamp(1.15rem, 3.6vw, 1.9rem);
-            line-height: 1.7;
+            font-size: clamp(1rem, 3.2vw, 1.7rem);
+            line-height: 1.6;
             color: #ffe9a8;
-            text-shadow: 0 0 16px rgba(255, 214, 120, .5)
+            text-shadow: 0 0 12px rgba(255, 214, 120, .5);
+            padding: 0 6px;
         }
 
         .blessing .en {
@@ -297,6 +300,80 @@
                 min-height: 60px
             }
         }
+
+        @media (max-width:600px) {
+            .top {
+                padding: 10px 12px 0;
+            }
+
+            .bismillah {
+                font-size: 1rem;
+                line-height: 1.6;
+                padding: 0 6px;
+            }
+
+            .eyebrow {
+                letter-spacing: .3em;
+                font-size: .55rem;
+                margin-top: 8px;
+            }
+
+            h1 {
+                font-size: clamp(1.6rem, 7vw, 2.2rem);
+                margin-top: 4px;
+            }
+
+            .arch {
+                height: 92vh;
+            }
+
+            .bottom {
+                padding: 0 12px 16px;
+            }
+
+            .blessing .ar {
+                font-size: clamp(1rem, 3.4vw, 1.4rem);
+                line-height: 1.6;
+            }
+
+            .blessing .en {
+                font-size: .85rem;
+                line-height: 1.35;
+            }
+
+            .hint {
+                font-size: .7rem;
+                letter-spacing: .15em;
+                margin-top: 8px;
+            }
+        }
+
+        @media (max-width:380px) {
+            .bismillah {
+                font-size: .9rem;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .eyebrow {
+                letter-spacing: .25em;
+                font-size: .5rem;
+            }
+
+            .blessing .ar {
+                font-size: .95rem;
+            }
+
+            .blessing .en {
+                font-size: .78rem;
+            }
+
+            .hint {
+                font-size: .62rem;
+            }
+        }
     </style>
 </head>
 
@@ -318,7 +395,7 @@
     <canvas id="c"></canvas>
 
     <header class="top">
-        <div class="bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</div>
+        <div class="bismillah">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
         <p class="eyebrow">Love Mubarak</p>
         <h1>Asiya <span>&amp;</span> Dheeraj</h1>
     </header>
