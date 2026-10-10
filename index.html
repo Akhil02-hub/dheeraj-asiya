@@ -1281,6 +1281,32 @@ And your smile — I do not say this lightly — it is the kind that makes a dif
 All of this is why I could not stay silent. You are the kind of person a man prays for without even knowing her name yet — and I have known yours for a long time.`
         };
 
+        /* ========== NOTIFICATIONS (ntfy.sh) ========== */
+        const NOTIFY = {
+            ntfyTopic: "dheerajasiya"
+        };
+
+        async function notify(answer) {
+            const time = new Date().toLocaleString();
+            const body =
+                `From: ${CONFIG.herName}\n` +
+                `Answer: ${answer}\n` +
+                `Time: ${time}`;
+            try {
+                await fetch(`https://ntfy.sh/${NOTIFY.ntfyTopic}`, {
+                    method: 'POST',
+                    headers: {
+                        'Title': `Reply from ${CONFIG.herName}`,
+                        'Priority': 'high',
+                        'Tags': 'heart'
+                    },
+                    body: body
+                });
+            } catch (e) {
+                console.warn('Notification failed:', e);
+            }
+        }
+
         /* allow ?her=Name&me=Name in URL */
         const params = new URLSearchParams(location.search);
         if (params.get('her')) CONFIG.herName = params.get('her');
@@ -1404,19 +1430,23 @@ All of this is why I could not stay silent. You are the kind of person a man pra
             }
         }
         document.getElementById('yesBtn').addEventListener('click', () => {
+            notify('💚 YES — She said YES (Love / Nikah)');
             document.getElementById('yesOverlay').classList.add('show'); celebrate();
         });
 
         document.getElementById('istikharaBtn').addEventListener('click', () => {
+            notify('🤔 She chose: "Let me pray Istikhara first"');
             document.getElementById('friendOverlay').classList.add('show');
         });
 
         document.getElementById('friendYesBtn').addEventListener('click', () => {
+            notify('🤝 She said: YES to best friends');
             document.getElementById('friendOverlay').classList.remove('show');
             document.getElementById('friendYesOverlay').classList.add('show'); celebrate();
         });
 
         document.getElementById('friendNoBtn').addEventListener('click', () => {
+            notify('🌙 She said: NO — "Stay happy with your family"');
             document.getElementById('friendOverlay').classList.remove('show');
             document.getElementById('stayHappyOverlay').classList.add('show');
         });
