@@ -1852,14 +1852,14 @@ All of this is why I could not stay silent. You are the kind of person a man pra
         }));
     </script>
 
-    <!-- ============ AMBIENT MELODY (Web Audio API) ============ -->
+    <!-- ============ AMBIENT MELODY (Web Audio API, no UI) ============ -->
     <script>
         (function () {
             let audioCtx = null;
             let masterGain = null;
             let melodyTimer = null;
             let isPlaying = false;
-            let toggleBtn = null;
+            let started = false;
 
             /* Hijaz maqam on D — the traditional Middle-Eastern / Islamic mode.
                D – Eb – F# – G – A – Bb – C  →  a calm, spiritual, night-prayer feel. */
@@ -1982,81 +1982,15 @@ All of this is why I could not stay silent. You are the kind of person a man pra
                 masterGain.gain.linearRampToValueAtTime(0.14, now + 3);
             }
 
-            function fadeOut() {
-                const now = audioCtx.currentTime;
-                masterGain.gain.cancelScheduledValues(now);
-                masterGain.gain.setValueAtTime(masterGain.gain.value, now);
-                masterGain.gain.linearRampToValueAtTime(0.0, now + 1.5);
-            }
-
-            function toggle() {
-                if (!audioCtx) init();
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-                if (isPlaying) {
-                    isPlaying = false;
-                    fadeOut();
-                    clearInterval(melodyTimer);
-                    melodyTimer = null;
-                    toggleBtn.textContent = '🔇';
-                    toggleBtn.setAttribute('aria-label', 'Play music');
-                } else {
-                    isPlaying = true;
-                    if (!melodyTimer) scheduleLoop();
-                    fadeIn();
-                    toggleBtn.textContent = '🔊';
-                    toggleBtn.setAttribute('aria-label', 'Mute music');
-                }
-            }
-
-            function buildButton() {
-                toggleBtn = document.createElement('button');
-                toggleBtn.id = 'musicToggle';
-                toggleBtn.textContent = '🔇';
-                toggleBtn.setAttribute('aria-label', 'Play music');
-                toggleBtn.style.cssText = [
-                    'position:fixed',
-                    'bottom:calc(16px + env(safe-area-inset-bottom))',
-                    'right:calc(16px + env(safe-area-inset-right))',
-                    'width:44px',
-                    'height:44px',
-                    'border-radius:50%',
-                    'background:rgba(7,20,43,.7)',
-                    'border:1px solid rgba(216,180,106,.5)',
-                    'color:var(--gold2)',
-                    'font-size:18px',
-                    'cursor:pointer',
-                    'z-index:80',
-                    'backdrop-filter:blur(6px)',
-                    '-webkit-backdrop-filter:blur(6px)',
-                    'display:grid',
-                    'place-items:center',
-                    'padding:0',
-                    'transition:transform .3s,background .3s',
-                    'box-shadow:0 6px 18px rgba(0,0,0,.35)'
-                ].join(';');
-                toggleBtn.addEventListener('mouseenter', () => toggleBtn.style.transform = 'scale(1.08)');
-                toggleBtn.addEventListener('mouseleave', () => toggleBtn.style.transform = 'scale(1)');
-                toggleBtn.addEventListener('click', toggle);
-                document.body.appendChild(toggleBtn);
-            }
-
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', buildButton);
-            } else {
-                buildButton();
-            }
-
             // Auto-start the melody when the gate opens (user gesture allows audio)
             window.addEventListener('gateOpened', () => {
+                if (started) return;
+                started = true;
                 if (!audioCtx) init();
                 if (audioCtx.state === 'suspended') audioCtx.resume();
                 isPlaying = true;
                 if (!melodyTimer) scheduleLoop();
                 fadeIn();
-                if (toggleBtn) {
-                    toggleBtn.textContent = '🔊';
-                    toggleBtn.setAttribute('aria-label', 'Mute music');
-                }
             });
         })();
     </script>
