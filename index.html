@@ -1173,7 +1173,34 @@
             }
 
             #question {
-                padding: 70px 18px;
+                padding: 36px 16px;
+                padding-top: max(36px, env(safe-area-inset-top));
+                padding-bottom: max(36px, env(safe-area-inset-bottom));
+            }
+
+            #question .eyebrow {
+                margin-bottom: 10px;
+            }
+
+            #question .big-q {
+                font-size: 27px;
+                line-height: 1.32;
+            }
+
+            #question .lead {
+                font-size: 16px;
+                line-height: 1.6;
+                margin-top: 14px;
+            }
+
+            #question .actions {
+                margin-top: 24px;
+                gap: 10px;
+            }
+
+            #question .actions .btn {
+                padding: 13px 20px;
+                font-size: 14px;
             }
 
             .overlay {
@@ -1222,7 +1249,28 @@
             }
 
             #question {
-                padding: 60px 14px;
+                padding: 28px 14px;
+                padding-top: max(28px, env(safe-area-inset-top));
+                padding-bottom: max(28px, env(safe-area-inset-bottom));
+            }
+
+            #question .big-q {
+                font-size: 24px;
+                line-height: 1.3;
+            }
+
+            #question .lead {
+                font-size: 15px;
+                line-height: 1.55;
+            }
+
+            #question .actions {
+                margin-top: 20px;
+            }
+
+            #question .actions .btn {
+                padding: 12px 18px;
+                font-size: 13.5px;
             }
 
             .promises h4 {
@@ -1673,6 +1721,7 @@ All of this is why I could not stay silent. You are the kind of person a man pra
             const g = document.getElementById('gate');
             notify('She opened it 📖');
             g.classList.add('open');                                   // trigger the slide
+            window.dispatchEvent(new Event('gateOpened'));             // start ambient melody
             setTimeout(() => { g.classList.add('gone'); document.body.classList.remove('locked'); }, 1700);
             setTimeout(() => document.querySelectorAll('#hero .reveal').forEach(el => el.classList.add('show')), 900);
         });
@@ -1797,9 +1846,219 @@ All of this is why I could not stay silent. You are the kind of person a man pra
             document.getElementById('friendOverlay').classList.remove('show');
             document.getElementById('stayHappyOverlay').classList.add('show');
         });
+
         document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => {
             b.closest('.overlay').classList.remove('show');
         }));
+    </script>
+
+    <!-- ============ AMBIENT MELODY (Web Audio API) ============ -->
+    <script>
+        (function () {
+            let audioCtx = null;
+            let masterGain = null;
+            let melodyTimer = null;
+            let isPlaying = false;
+            let toggleBtn = null;
+
+            /* Hijaz maqam on D — the traditional Middle-Eastern / Islamic mode.
+               D – Eb – F# – G – A – Bb – C  →  a calm, spiritual, night-prayer feel. */
+            const FREQ = {
+                D3: 146.83, Eb3: 155.56, Fs3: 185.00, G3: 196.00,
+                A3: 220.00, Bb3: 233.08, C4: 261.63, D4: 293.66,
+                Eb4: 311.13, Fs4: 369.99, G4: 392.00, A4: 440.00
+            };
+
+            /* Slow, meditative phrase — 17 notes over ~50 seconds, then loops. */
+            const PHRASE = [
+                { n: 'D4', t: 0.0, d: 3.0, v: 0.22 },
+                { n: 'Fs4', t: 2.5, d: 2.5, v: 0.18 },
+                { n: 'G4', t: 5.0, d: 2.0, v: 0.20 },
+                { n: 'A4', t: 7.0, d: 3.5, v: 0.20 },
+                { n: 'G4', t: 10.0, d: 2.0, v: 0.16 },
+                { n: 'Fs4', t: 12.5, d: 2.0, v: 0.18 },
+                { n: 'Eb4', t: 15.0, d: 3.5, v: 0.20 },
+                { n: 'D4', t: 18.5, d: 4.0, v: 0.22 },
+                { n: 'D4', t: 23.0, d: 2.5, v: 0.20 },
+                { n: 'Fs4', t: 25.0, d: 2.0, v: 0.18 },
+                { n: 'A4', t: 27.5, d: 3.0, v: 0.20 },
+                { n: 'Bb3', t: 30.5, d: 2.5, v: 0.16 },
+                { n: 'A4', t: 33.0, d: 3.5, v: 0.20 },
+                { n: 'G4', t: 36.0, d: 2.0, v: 0.18 },
+                { n: 'Fs4', t: 38.0, d: 2.5, v: 0.18 },
+                { n: 'Eb4', t: 40.5, d: 4.0, v: 0.20 },
+                { n: 'D4', t: 44.5, d: 5.0, v: 0.22 }
+            ];
+            const LOOP_LEN = 52; // seconds
+
+            function createReverb(ctx) {
+                const length = ctx.sampleRate * 3;
+                const impulse = ctx.createBuffer(2, length, ctx.sampleRate);
+                for (let ch = 0; ch < 2; ch++) {
+                    const d = impulse.getChannelData(ch);
+                    for (let i = 0; i < length; i++) {
+                        d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2.5);
+                    }
+                }
+                const conv = ctx.createConvolver();
+                conv.buffer = impulse;
+                return conv;
+            }
+
+            function playNote(freq, time, dur, vol, type) {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                const filter = audioCtx.createBiquadFilter();
+                osc.type = type || 'sine';
+                osc.frequency.value = freq;
+                filter.type = 'lowpass';
+                filter.frequency.value = 1400;
+                filter.Q.value = 0.7;
+                gain.gain.setValueAtTime(0, time);
+                gain.gain.linearRampToValueAtTime(vol, time + 0.4);
+                gain.gain.exponentialRampToValueAtTime(0.0001, time + dur);
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(masterGain);
+                osc.start(time);
+                osc.stop(time + dur + 0.1);
+            }
+
+            function schedulePhrase(startTime) {
+                PHRASE.forEach(note => {
+                    playNote(FREQ[note.n], startTime + note.t, note.d, note.v, 'sine');
+                    // soft octave bell layer for sparkle
+                    playNote(FREQ[note.n] * 2, startTime + note.t, note.d * 0.6, note.v * 0.15, 'triangle');
+                });
+            }
+
+            function startDrone() {
+                // Low root + fifth pad — D2 and A2
+                [73.42, 110.00].forEach((f, i) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    const filter = audioCtx.createBiquadFilter();
+                    osc.type = 'sine';
+                    osc.frequency.value = f;
+                    osc.detune.value = i === 0 ? -4 : 4;
+                    filter.type = 'lowpass';
+                    filter.frequency.value = 400;
+                    gain.gain.value = 0.06;
+                    osc.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(masterGain);
+                    osc.start();
+                });
+            }
+
+            function init() {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                masterGain = audioCtx.createGain();
+                masterGain.gain.value = 0.0;
+
+                const reverb = createReverb(audioCtx);
+                const wet = audioCtx.createGain();
+                wet.gain.value = 0.45;
+                masterGain.connect(audioCtx.destination);
+                masterGain.connect(reverb);
+                reverb.connect(wet);
+                wet.connect(audioCtx.destination);
+
+                startDrone();
+            }
+
+            function scheduleLoop() {
+                schedulePhrase(audioCtx.currentTime + 0.1);
+                melodyTimer = setInterval(() => {
+                    if (!isPlaying) return;
+                    schedulePhrase(audioCtx.currentTime + 0.05);
+                }, LOOP_LEN * 1000);
+            }
+
+            function fadeIn() {
+                const now = audioCtx.currentTime;
+                masterGain.gain.cancelScheduledValues(now);
+                masterGain.gain.setValueAtTime(masterGain.gain.value, now);
+                masterGain.gain.linearRampToValueAtTime(0.14, now + 3);
+            }
+
+            function fadeOut() {
+                const now = audioCtx.currentTime;
+                masterGain.gain.cancelScheduledValues(now);
+                masterGain.gain.setValueAtTime(masterGain.gain.value, now);
+                masterGain.gain.linearRampToValueAtTime(0.0, now + 1.5);
+            }
+
+            function toggle() {
+                if (!audioCtx) init();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                if (isPlaying) {
+                    isPlaying = false;
+                    fadeOut();
+                    clearInterval(melodyTimer);
+                    melodyTimer = null;
+                    toggleBtn.textContent = '🔇';
+                    toggleBtn.setAttribute('aria-label', 'Play music');
+                } else {
+                    isPlaying = true;
+                    if (!melodyTimer) scheduleLoop();
+                    fadeIn();
+                    toggleBtn.textContent = '🔊';
+                    toggleBtn.setAttribute('aria-label', 'Mute music');
+                }
+            }
+
+            function buildButton() {
+                toggleBtn = document.createElement('button');
+                toggleBtn.id = 'musicToggle';
+                toggleBtn.textContent = '🔇';
+                toggleBtn.setAttribute('aria-label', 'Play music');
+                toggleBtn.style.cssText = [
+                    'position:fixed',
+                    'bottom:calc(16px + env(safe-area-inset-bottom))',
+                    'right:calc(16px + env(safe-area-inset-right))',
+                    'width:44px',
+                    'height:44px',
+                    'border-radius:50%',
+                    'background:rgba(7,20,43,.7)',
+                    'border:1px solid rgba(216,180,106,.5)',
+                    'color:var(--gold2)',
+                    'font-size:18px',
+                    'cursor:pointer',
+                    'z-index:80',
+                    'backdrop-filter:blur(6px)',
+                    '-webkit-backdrop-filter:blur(6px)',
+                    'display:grid',
+                    'place-items:center',
+                    'padding:0',
+                    'transition:transform .3s,background .3s',
+                    'box-shadow:0 6px 18px rgba(0,0,0,.35)'
+                ].join(';');
+                toggleBtn.addEventListener('mouseenter', () => toggleBtn.style.transform = 'scale(1.08)');
+                toggleBtn.addEventListener('mouseleave', () => toggleBtn.style.transform = 'scale(1)');
+                toggleBtn.addEventListener('click', toggle);
+                document.body.appendChild(toggleBtn);
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', buildButton);
+            } else {
+                buildButton();
+            }
+
+            // Auto-start the melody when the gate opens (user gesture allows audio)
+            window.addEventListener('gateOpened', () => {
+                if (!audioCtx) init();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                isPlaying = true;
+                if (!melodyTimer) scheduleLoop();
+                fadeIn();
+                if (toggleBtn) {
+                    toggleBtn.textContent = '🔊';
+                    toggleBtn.setAttribute('aria-label', 'Mute music');
+                }
+            });
+        })();
     </script>
 </body>
 
