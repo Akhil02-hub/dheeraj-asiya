@@ -72,9 +72,13 @@
             flex: 1;
             position: relative;
             background: linear-gradient(160deg, #0d3b33, #072a24 60%, #041d19);
-            transition: transform 1.8s cubic-bezier(.77, 0, .18, 1);
+            transition: transform 1.6s cubic-bezier(.65, 0, .15, 1);
             overflow: hidden;
             border: 1px solid rgba(216, 180, 106, .25);
+            will-change: transform;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
         }
 
         .door::before {
@@ -93,6 +97,8 @@
             border: 2px solid rgba(216, 180, 106, .55);
             border-radius: 50% 50% 6px 6px / 28% 28% 6px 6px;
             box-shadow: inset 0 0 40px rgba(216, 180, 106, .12);
+            will-change: transform;
+            transform: translateZ(0);
         }
 
         .door.left .arch {
@@ -150,7 +156,8 @@
 
         #gate.open .gate-center {
             opacity: 0;
-            pointer-events: none
+            pointer-events: none;
+            transition: opacity .5s ease;
         }
 
         .bismillah {
@@ -865,36 +872,40 @@
             opacity: .8
         }
 
-        /* question */
-        #question .ring {
-            width: 220px;
-            height: 220px;
-            margin: 0 auto 34px;
-            display: grid;
-            place-items: center;
-            animation: ringFloat 5s ease-in-out infinite;
+        /* ---------- RING BOX IFRAME (animated entrance) ---------- */
+        #ringFrame {
+            opacity: 0;
+            transform: translateY(100%);
+            transition: transform .7s cubic-bezier(.22, .9, .25, 1), opacity .5s ease;
+            will-change: transform, opacity;
         }
 
-        #question .ring img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            filter: drop-shadow(0 18px 28px rgba(0, 0, 0, .5)) drop-shadow(0 0 30px rgba(216, 180, 106, .6));
-            user-select: none;
-            -webkit-user-drag: none;
-            pointer-events: none;
+        #ringFrame.slide-in {
+            opacity: 1;
+            transform: translateY(0);
         }
 
-        @keyframes ringFloat {
+        /* ---------- QUESTION SECTION (slides up from below) ---------- */
+        #question {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 60;
+            background: radial-gradient(ellipse at 50% 50%, rgba(4, 11, 24, .55) 0%, rgba(4, 11, 24, .82) 70%, rgba(4, 11, 24, .92) 100%);
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+            overflow-y: auto;
+            opacity: 0;
+            transform: translateY(90px);
+            transition: opacity 1.1s ease, transform 1.1s cubic-bezier(.22, .9, .25, 1);
+            will-change: transform, opacity;
+        }
 
-            0%,
-            100% {
-                transform: translateY(0) rotate(-4deg)
-            }
-
-            50% {
-                transform: translateY(-12px) rotate(4deg)
-            }
+        #question.show-question {
+            display: flex;
+            pointer-events: auto;
+            opacity: 1;
+            transform: translateY(0);
         }
 
         .big-q {
@@ -1189,15 +1200,20 @@
                         </div>
                     </li>
                 </ul>
+                <div class="center" style="margin-top: 50px;">
+                    <button class="btn btn-gold pulse" id="revealQuestionBtn">Something Special For You 🤍</button>
+                </div>
             </div>
         </section>
+
+        <!-- ============ RING BOX (3D) ============ -->
+        <iframe id="ringFrame" src="" title="Ring Box"
+            style="position:fixed;inset:0;width:100vw;height:100vh;border:0;display:none;z-index:50;"
+            allow="autoplay"></iframe>
 
         <!-- ============ QUESTION ============ -->
         <section id="question">
             <div class="container center">
-                <div class="ring reveal">
-                    <img src="ring.png" alt="Diamond ring" loading="lazy">
-                </div>
                 <div class="eyebrow reveal d1">With Allah as my witness</div>
                 <div class="big-q reveal d2"><span id="qName">Asiya</span>, will you be my <em>life partner</em>?</div>
                 <p class="lead reveal d3">There is no pressure here — only a hopeful heart. Whatever you decide, I trust
@@ -1222,7 +1238,6 @@
                 proper way, In shā' Allāh.</p>
             <p>May Allah put barakah in what lies ahead, and make us a means of goodness for each other in this life and
                 the next. 🤍</p>
-            <button class="btn btn-ghost close-x" data-close>Return</button>
         </div>
     </div>
 
@@ -1247,7 +1262,6 @@
             <h2>Alhamdulillah!</h2>
             <p>I'm so glad we can still be in each other's lives. Friendship is a beautiful blessing, and I truly value
                 you.</p>
-            <button class="btn btn-ghost close-x" data-close>Return</button>
         </div>
     </div>
 
@@ -1258,7 +1272,6 @@
             <h2>Ok, stay happy with your family</h2>
             <p>I wish you nothing but the best in your life. May Allah bless you and your family with peace, health, and
                 happiness.</p>
-            <button class="btn btn-ghost close-x" data-close>Return</button>
         </div>
     </div>
 
@@ -1289,7 +1302,6 @@ All of this is why I could not stay silent. You are the kind of person a man pra
         async function notify(answer) {
             const time = new Date().toLocaleString();
             const body =
-                `From: ${CONFIG.herName}\n` +
                 `Answer: ${answer}\n` +
                 `Time: ${time}`;
             try {
@@ -1368,9 +1380,10 @@ All of this is why I could not stay silent. You are the kind of person a man pra
         /* ========== GATE ========== */
         document.getElementById('openBtn').addEventListener('click', () => {
             const g = document.getElementById('gate');
-            g.classList.add('open');
-            setTimeout(() => { g.classList.add('gone'); document.body.classList.remove('locked'); }, 1900);
-            setTimeout(() => document.querySelectorAll('#hero .reveal').forEach(el => el.classList.add('show')), 700);
+            notify('She opened it 📖');
+            g.classList.add('open');                                   // trigger the slide
+            setTimeout(() => { g.classList.add('gone'); document.body.classList.remove('locked'); }, 1700);
+            setTimeout(() => document.querySelectorAll('#hero .reveal').forEach(el => el.classList.add('show')), 900);
         });
 
         /* ========== REVEAL ON SCROLL ========== */
@@ -1411,6 +1424,49 @@ All of this is why I could not stay silent. You are the kind of person a man pra
             });
         });
 
+        /* ========== REVEAL QUESTION ========== */
+        (function () {
+            const frame = document.getElementById('ringFrame');
+            const qSection = document.getElementById('question');
+            let revealed = false;
+
+            function showQuestion() {
+                if (revealed) return;
+                revealed = true;
+                frame.style.pointerEvents = 'none';
+                // small delay so the ring box settles, then slide the question up
+                requestAnimationFrame(() => {
+                    qSection.classList.add('show-question');
+                    setTimeout(() => {
+                        document.querySelectorAll('#question .reveal').forEach(el => el.classList.add('show'));
+                    }, 120);
+                });
+            }
+
+            window.addEventListener('message', function (e) {
+                if (e.data === 'ringBoxOpened') {
+                    setTimeout(showQuestion, 400);
+                }
+            });
+
+            document.getElementById('revealQuestionBtn').addEventListener('click', function () {
+                // 1. Prepare the iframe (still hidden, at the bottom)
+                frame.src = 'ringbox.html';
+                frame.style.display = 'block';
+                frame.style.zIndex = '50';
+                document.body.style.overflow = 'hidden';
+                this.parentElement.style.display = 'none';
+
+                // 2. Trigger the slide-in on the next paint
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => frame.classList.add('slide-in'));
+                });
+
+                // 3. Safety fallback in case the ringbox message never arrives
+                setTimeout(showQuestion, 9000);
+            });
+        })();
+
         /* ========== RESPONSES ========== */
         function celebrate() {
             const symbols = ['✦', '✧', '☾', '🤍', '✨', '⋆'];
@@ -1430,23 +1486,23 @@ All of this is why I could not stay silent. You are the kind of person a man pra
             }
         }
         document.getElementById('yesBtn').addEventListener('click', () => {
-            notify('💚 YES — She said YES (Love / Nikah)');
+            notify('She said yes 💚');
             document.getElementById('yesOverlay').classList.add('show'); celebrate();
         });
 
         document.getElementById('istikharaBtn').addEventListener('click', () => {
-            notify('🤔 She chose: "Let me pray Istikhara first"');
+            notify('Pray Istikhara first 🤲');
             document.getElementById('friendOverlay').classList.add('show');
         });
 
         document.getElementById('friendYesBtn').addEventListener('click', () => {
-            notify('🤝 She said: YES to best friends');
+            notify('Best friend yes 🤝');
             document.getElementById('friendOverlay').classList.remove('show');
             document.getElementById('friendYesOverlay').classList.add('show'); celebrate();
         });
 
         document.getElementById('friendNoBtn').addEventListener('click', () => {
-            notify('🌙 She said: NO — "Stay happy with your family"');
+            notify('She said no 🌙');
             document.getElementById('friendOverlay').classList.remove('show');
             document.getElementById('stayHappyOverlay').classList.add('show');
         });
