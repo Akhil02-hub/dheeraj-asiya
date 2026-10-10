@@ -1132,6 +1132,85 @@
                 font-size: 13.5px;
             }
         }
+
+        /* ---------- GATE on mobile — fix the doors ---------- */
+        @media (max-width: 700px) {
+
+            /* Door overall proportions */
+            .door {
+                border-width: 0 1px;
+            }
+
+            /* Arch: make it much wider so a proper arch shows */
+            .door .arch {
+                top: 4%;
+                bottom: 4%;
+                width: 130%;
+                border-width: 1.6px;
+                border-radius: 50% 50% 4px 4px / 22% 22% 4px 4px;
+                box-shadow: inset 0 0 30px rgba(216, 180, 106, .12);
+            }
+
+            /* Push each arch toward the center of the screen */
+            .door.left .arch {
+                right: -65%;
+            }
+
+            .door.right .arch {
+                left: -65%;
+            }
+
+            /* Handles: smaller, tucked near the split */
+            .door.left .handle,
+            .door.right .handle {
+                width: 9px;
+                height: 44px;
+                border-radius: 6px;
+                box-shadow: 0 0 12px rgba(216, 180, 106, .55);
+            }
+
+            .door.left .handle {
+                right: 10px;
+            }
+
+            .door.right .handle {
+                left: 10px;
+            }
+
+            /* Faint center seam so the two doors read as a pair */
+            .door.left {
+                border-right: 1px solid rgba(216, 180, 106, .35);
+            }
+
+            .door.right {
+                border-left: 1px solid rgba(216, 180, 106, .35);
+            }
+        }
+
+        @media (max-width: 400px) {
+
+            .door .arch {
+                top: 3%;
+                bottom: 3%;
+                width: 145%;
+                border-width: 1.4px;
+                border-radius: 50% 50% 3px 3px / 20% 20% 3px 3px;
+            }
+
+            .door.left .arch {
+                right: -72%;
+            }
+
+            .door.right .arch {
+                left: -72%;
+            }
+
+            .door.left .handle,
+            .door.right .handle {
+                width: 8px;
+                height: 38px;
+            }
+        }
     </style>
 </head>
 
